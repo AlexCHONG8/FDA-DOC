@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FDA Submission Dashboard - Summed Medtech</title>
+    <style>
+        :root {
+            --primary-color: #005a9e;
+            --secondary-color: #f0f8ff;
+            --font-color: #333;
+            --border-color: #ddd;
+            --header-bg: #f7f7f7;
+            --blue-tag: #007bff;
+            --green-tag: #28a745;
+            --hover-color: #e9ecef;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7fa;
+            color: var(--font-color);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        header p {
+            margin: 5px 0 0;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1em;
+            font-weight: 500;
+            position: relative;
+            color: var(--font-color);
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Document List Styles */
+        .sub-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .sub-tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 0.95em;
+            border-radius: 6px 6px 0 0;
+        }
+        .sub-tab-button.active {
+            background-color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--secondary-color);
+            font-weight: 600;
+        }
+        .sub-tab-content {
+            display: none;
+        }
+        .sub-tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: var(--header-bg);
+            font-weight: 600;
+        }
+
+        tbody tr:hover {
+            background-color: var(--hover-color);
+        }
+
+        .doc-id { font-weight: bold; }
+        .doc-phase { font-weight: bold; font-style: italic; color: var(--primary-color); padding: 15px 0; }
+        .doc-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        .tag-blue { background-color: var(--blue-tag); }
+        .tag-green { background-color: var(--green-tag); }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        input[type="date"] {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+        }
+
+        /* Workflow and Flowchart Styles */
+        .workflow-container, .flowchart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .phase, .dept-group {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .phase h3, .dept-group h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        .docs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .doc-card {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 6px;
+            background-color: var(--secondary-color);
+        }
+        .doc-card-title { font-weight: bold; }
+        .doc-card-dept { font-size: 0.9em; color: #555; }
+        .legend { margin-bottom: 20px; }
+        .legend-item { display: inline-flex; align-items: center; margin-right: 20px; }
+        .legend-color { width: 20px; height: 20px; margin-right: 8px; border-radius: 4px; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .tabs { flex-direction: column; }
+            .tab-button { text-align: left; border-bottom: 1px solid var(--border-color); }
+            th, td { padding: 8px; }
+            input[type="date"] { width: 100%; box-sizing: border-box; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>FDA Submission Dashboard</h1>
+            <p>Summed Medtech - Multtipen Injector Project</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'tab-workflow')">详细部门工作流程</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-flowchart')">概览流程图</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-checklist')">文档清单</button>
+        </div>
+
+        <!-- Tab 1: Detailed Department Workflow -->
+        <div id="tab-workflow" class="tab-content active">
+            <h2>部门职责与相关文档</h2>
+            <p>此视图按部门组织所有关键文档，以显示每个团队的职责。</p>
+
+            <div class="dept-group">
+                <h3>业务开发 (BD)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card">
+                        <div class="doc-card-title">1. 用户需求规范 (URS)</div>
+                        <div class="doc-card-dept">负责部门: BD</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dept-group">
+                <h3>研发设计 (R&D_Design)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card"><div class="doc-card-title">2. 设计输入需求 (DIR)</div></div>
+                    <div class="doc-card"><div class="doc-card-title">4. 概念设计文档</div></div>
+                    <div class="doc-card"><div class="doc-card-title">6. 详细设计规格</div></div>
+                    <div class="doc-card"><div class="doc-card-title">25. DFMEA文档</div></div>
+                    <div class="doc-card"><div class="doc-card-title">26. UFMEA文档</div></div>
+                    <div class="doc-card"><div class="doc-card-title">30. 可用性工程文件</div></div>
+                </div>
+            </div>
+
+            <div class="dept-group">
+                <h3>质量保证 (QA)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card"><div class="doc-card-title">3. 风险管理文件</div></div>
+                    <div class="doc-card"><div class="doc-card-title">5. 设计控制计划</div></div>
+                    <div class="doc-card"><div class="doc-card-title">12. 设计验证总结报告</div></div>
+                    <div class="doc-card"><div class="doc-card-title">14. 设计历史文件(DHF)编制</div></div>
+                    <div class="doc-card"><div class="doc-card-title">18. 内部设计评审记录</div></div>
+                    <div class="doc-card"><div class="doc-card-title">19. 变更控制记录</div></div>
+                    <div class="doc-card"><div class="doc-card-title">21. 培训记录</div></div>
+                    <div class="doc-card"><div class="doc-card-title">22. 设备校准和维护记录</div></div>
+                    <div class="doc-card"><div class="doc-card-title">23. 环境监控记录</div></div>
+                    <div class="doc-card"><div class="doc-card-title">24. 软件验证文件</div></div>
+                    <div class="doc-card"><div class="doc-card-title">28. 风险管理计划</div></div>
+                    <div class="doc-card"><div class="doc-card-title">29. 风险管理报告</div></div>
+                    <div class="doc-card"><div class="doc-card-title">31. DHF产品设计开发历史纪录审查表</div></div>
+                </div>
+            </div>
+
+            <div class="dept-group">
+                <h3>生产 (Production)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card"><div class="doc-card-title">7. 原型制造</div></div>
+                    <div class="doc-card"><div class="doc-card-title">27. PFMEA文档</div></div>
+                </div>
+            </div>
+
+            <div class="dept-group">
+                <h3>研发实验室 (R&D_Lab)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card"><div class="doc-card-title">8. 设计验证测试计划</div></div>
+                    <div class="doc-card"><div class="doc-card-title">9. 生物相容性测试报告</div></div>
+                    <div class="doc-card"><div class="doc-card-title">11. 用户界面评估报告</div></div>
+                    <div class="doc-card"><div class="doc-card-title">13. 设计确认报告</div></div>
+                </div>
+            </div>
+
+            <div class="dept-group">
+                <h3>仓储 (Warehouse)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card"><div class="doc-card-title">10. 包装完整性测试报告</div></div>
+                </div>
+            </div>
+
+            <div class="dept-group">
+                <h3>法规事务 (RA)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card"><div class="doc-card-title">15. 510(k)预提交申请</div></div>
+                    <div class="doc-card"><div class="doc-card-title">16. BLA组合产品申请</div></div>
+                    <div class="doc-card"><div class="doc-card-title">17. 实质等效性分析</div></div>
+                </div>
+            </div>
+
+            <div class="dept-group">
+                <h3>采购 (Procurement)</h3>
+                <div class="docs-grid">
+                    <div class="doc-card"><div class="doc-card-title">20. 供应商资质文件</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Overview Flowchart -->
+        <div id="tab-flowchart" class="tab-content">
+            <h2>高层关键阶段流程图</h2>
+            <p>此视图显示了项目的主要阶段和时间线。</p>
+
+            <div class="flowchart-container">
+                <div class="phase">
+                    <h3>阶段1：需求分析阶段 (第1-5个月)</h3>
+                    <p><strong>关键活动:</strong> 定义用户需求, 转换设计输入, 启动风险管理, 创建概念设计和设计控制计划。</p>
+                    <p><strong>主要产出:</strong> URS, DIR, 风险管理文件, 概念设计, 设计控制计划, 详细设计规格。</p>
+                </div>
+                <div class="phase">
+                    <h3>阶段2：设计开发阶段 (第6-12个月)</h3>
+                    <p><strong>关键活动:</strong> 制造原型, 规划和执行设计验证测试（生物相容性, 包装, 用户界面）。</p>
+                    <p><strong>主要产出:</strong> 原型, 测试计划, 测试报告, 设计验证总结报告。</p>
+                </div>
+                <div class="phase">
+                    <h3>阶段3：验证确认阶段 (第13-21个月)</h3>
+                    <p><strong>关键活动:</strong> 执行设计确认, 编制完整的设计历史文件(DHF), 准备法规提交文件。</p>
+                    <p><strong>主要产出:</strong> 设计确认报告, DHF, 510(k)和BLA申请草案, 实质等效性分析。</p>
+                </div>
+                 <div class="phase">
+                    <h3>阶段4：提交与审批</h3>
+                    <p><strong>关键活动:</strong> 完成并提交510(k)和BLA申请, 回应FDA问询。</p>
+                    <p><strong>主要产出:</strong> FDA提交完成。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Document Checklist -->
+        <div id="tab-checklist" class="tab-content">
+            <h2>项目总览与文档清单</h2>
+            <div class="legend">
+                <h3>图例说明</h3>
+                <div class="legend-item"><div class="legend-color" style="background:var(--blue-tag);"></div> 提交至FDA的关键文档</div>
+                <div class="legend-item"><div class="legend-color" style="background:var(--green-tag);"></div> 为审计准备的内部文档</div>
+            </div>
+
+            <div class="sub-tabs">
+                <button class="sub-tab-button active" onclick="openSubTab(event, 'sub-tab-all')">项目总览</button>
+                <button class="sub-tab-button" onclick="openSubTab(event, 'sub-tab-fda')">FDA提交文档</button>
+                <button class="sub-tab-button" onclick="openSubTab(event, 'sub-tab-audit')">审计准备文档</button>
+                <button class="sub-tab-button" onclick="openSubTab(event, 'sub-tab-fmea')">FMEA文档</button>
+            </div>
+
+            <!-- Sub Tab: All Docs -->
+            <div id="sub-tab-all" class="sub-tab-content active">
+                <h3>所有关键文档</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>文档名称 (英文名称)</th>
+                            <th>负责部门</th>
+                            <th>文档标识</th>
+                            <th>完成状态</th>
+                            <th>预计完成时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Phase 1 -->
+                        <tr><td colspan="6" class="doc-phase">阶段1：需求分析阶段 (第1-5个月)</td></tr>
+                        <tr>
+                            <td class="doc-id">1</td>
+                            <td>用户需求规范 (User Requirements Specification)</td>
+                            <td>业务开发 (BD)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">2</td>
+                            <td>设计输入需求 (Design Input Requirements)</td>
+                            <td>研发设计 (R&D_Design)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">3</td>
+                            <td>风险管理文件 (Risk Management File)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">4</td>
+                            <td>概念设计文档 (Concept Design Document)</td>
+                            <td>研发设计 (R&D_Design)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">5</td>
+                            <td>设计控制计划 (Design Control Plan)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">6</td>
+                            <td>详细设计规格 (Detailed Design Specifications)</td>
+                            <td>研发设计 (R&D_Design)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">28</td>
+                            <td>风险管理计划 (Risk Management Plan)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">30</td>
+                            <td>可用性工程文件 (Usability Engineering File)</td>
+                            <td>研发设计 (R&D_Design)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+
+                        <!-- Phase 2 -->
+                        <tr><td colspan="6" class="doc-phase">阶段2：设计开发阶段 (第6-12个月)</td></tr>
+                        <tr>
+                            <td class="doc-id">7</td>
+                            <td>原型制造 (Prototype Manufacturing)</td>
+                            <td>生产 (Production)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">8</td>
+                            <td>设计验证测试计划 (Design Verification Testing Plan)</td>
+                            <td>研发实验室 (R&D_Lab)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">9</td>
+                            <td>生物相容性测试报告 (Biocompatibility Testing Report)</td>
+                            <td>研发实验室 (R&D_Lab) / 制药公司</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">10</td>
+                            <td>包装完整性测试报告 (Packaging Integrity Testing Report)</td>
+                            <td>仓储 (Warehouse)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">11</td>
+                            <td>用户界面评估报告 (User Interface Evaluation Report)</td>
+                            <td>研发实验室 (R&D_Lab)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">12</td>
+                            <td>设计验证总结报告 (Design Verification Summary Report)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">13</td>
+                            <td>设计确认报告 (Design Confirmation Report)</td>
+                            <td>研发实验室 (R&D_Lab) / 制药公司</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                         <tr>
+                            <td class="doc-id">25</td>
+                            <td>DFMEA文档 (Design FMEA)</td>
+                            <td>研发设计 (R&D_Design)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">26</td>
+                            <td>UFMEA文档 (Usage FMEA)</td>
+                            <td>研发设计 (R&D_Design)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">27</td>
+                            <td>PFMEA文档 (Process FMEA)</td>
+                            <td>生产 (Production)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+
+                        <!-- Phase 3 -->
+                        <tr><td colspan="6" class="doc-phase">阶段3：验证确认阶段 (第13-21个月)</td></tr>
+                        <tr>
+                            <td class="doc-id">14</td>
+                            <td>设计历史文件(DHF)编制 (Design History File Compilation)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">15</td>
+                            <td>510(k)预提交申请 (510(k) Pre-submission Application)</td>
+                            <td>法规事务 (RA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">16</td>
+                            <td>BLA组合产品申请 (BLA Combination Product Application)</td>
+                            <td>法规事务 (RA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">17</td>
+                            <td>实质等效性分析 (Substantial Equivalence Analysis)</td>
+                            <td>法规事务 (RA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">29</td>
+                            <td>风险管理报告 (Risk Management Report)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">31</td>
+                            <td>DHF产品设计开发历史纪录审查表 (DHF Review Form)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-blue">FDA提交</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+
+                        <!-- Audit Docs -->
+                        <tr><td colspan="6" class="doc-phase">审计准备文档 (不提交至FDA)</td></tr>
+                        <tr>
+                            <td class="doc-id">18</td>
+                            <td>内部设计评审记录 (Internal Design Review Records)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">19</td>
+                            <td>变更控制记录 (Change Control Records)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">20</td>
+                            <td>供应商资质文件 (Supplier Qualification Documents)</td>
+                            <td>采购 (Procurement)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">21</td>
+                            <td>培训记录 (Training Records)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">22</td>
+                            <td>设备校准和维护记录 (Equipment Calibration and Maintenance Records)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">23</td>
+                            <td>环境监控记录 (Environmental Monitoring Records)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                        <tr>
+                            <td class="doc-id">24</td>
+                            <td>软件验证文件 (Software Validation Documents)</td>
+                            <td>质量保证 (QA)</td>
+                            <td><span class="doc-tag tag-green">审计准备</span></td>
+                            <td><input type="checkbox"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Sub Tab: FDA Docs -->
+            <div id="sub-tab-fda" class="sub-tab-content">
+                <h3>FDA提交文档</h3>
+                <!-- Table will be populated by JS, or can be duplicated here -->
+            </div>
+
+            <!-- Sub Tab: Audit Docs -->
+            <div id="sub-tab-audit" class="sub-tab-content">
+                <h3>审计准备文档</h3>
+                <!-- Table will be populated by JS, or can be duplicated here -->
+            </div>
+
+            <!-- Sub Tab: FMEA Docs -->
+            <div id="sub-tab-fmea" class="sub-tab-content">
+                <h3>FMEA相关文档</h3>
+                <!-- Table will be populated by JS, or can be duplicated here -->
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tabbuttons;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tabbuttons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].className = tabbuttons[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        function openSubTab(evt, subTabName) {
+            var i, subtabcontent, subtabbuttons;
+            var parentTab = evt.currentTarget.closest('.tab-content');
+            subtabcontent = parentTab.getElementsByClassName("sub-tab-content");
+            for (i = 0; i < subtabcontent.length; i++) {
+                subtabcontent[i].style.display = "none";
+            }
+            subtabbuttons = parentTab.getElementsByClassName("sub-tab-button");
+            for (i = 0; i < subtabbuttons.length; i++) {
+                subtabbuttons[i].className = subtabbuttons[i].className.replace(" active", "");
+            }
+            parentTab.querySelector('#' + subTabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            // If it's a filtered view, generate the content
+            if (subTabName !== 'sub-tab-all') {
+                generateFilteredTable(subTabName);
+            }
+        }
+
+        function generateFilteredTable(subTabName) {
+            const tableContainer = document.querySelector('#' + subTabName);
+            const allRows = Array.from(document.querySelectorAll('#sub-tab-all tbody tr'));
+            let filterTag = '';
+
+            if (subTabName === 'sub-tab-fda') filterTag = 'tag-blue';
+            if (subTabName === 'sub-tab-audit') filterTag = 'tag-green';
+            if (subTabName === 'sub-tab-fmea') {
+                 // FMEA docs are a special case based on ID
+                 const fmeaIds = ['25', '26', '27'];
+                 const filteredRows = allRows.filter(row => fmeaIds.includes(row.cells[0]?.innerText));
+                 const newTable = createTableFromRows(filteredRows, 'FMEA相关文档');
+                 tableContainer.innerHTML = newTable;
+                 return;
+            }
+
+            const filteredRows = allRows.filter(row => {
+                if (row.cells.length < 4) return true; // Keep phase rows
+                const tagElement = row.cells[3].querySelector('.doc-tag');
+                return tagElement && tagElement.classList.contains(filterTag);
+            });
+
+            const title = document.querySelector(`.sub-tab-button[onclick*="'${subTabName}'"]`).innerText;
+            const newTable = createTableFromRows(filteredRows, title);
+            tableContainer.innerHTML = newTable;
+        }
+
+        function createTableFromRows(rows, title) {
+             let tableHTML = `<h3>${title}</h3><table><thead><tr>
+                <th>ID</th>
+                <th>文档名称 (英文名称)</th>
+                <th>负责部门</th>
+                <th>文档标识</th>
+                <th>完成状态</th>
+                <th>预计完成时间</th>
+            </tr></thead><tbody>`;
+
+            let hasContent = false;
+            rows.forEach(row => {
+                // Don't add phase headers if they have no content under them
+                if (row.classList.contains('doc-phase')) {
+                    const nextRow = rows[rows.indexOf(row) + 1];
+                    if (nextRow && !nextRow.classList.contains('doc-phase')) {
+                       tableHTML += row.outerHTML;
+                    }
+                } else {
+                    tableHTML += row.outerHTML;
+                    hasContent = true;
+                }
+            });
+
+            if (!hasContent) {
+                tableHTML += '<tr><td colspan="6">没有符合条件的文档。</td></tr>';
+            }
+
+            tableHTML += '</tbody></table>';
+            return tableHTML;
+        }
+
+    </script>
+
+</body>
+</html>

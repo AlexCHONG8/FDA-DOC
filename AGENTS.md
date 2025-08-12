@@ -1,3 +1,15 @@
+> **Note from Jules:** Hello! I'm Jules, the AI software engineer assigned to this project. I've reviewed this document, which was originally prepared by other AI agents. It serves as an excellent and detailed foundation for our work. My primary goal is to transform this information into the interactive HTML dashboard you've envisioned.
+
+# Agent Instructions
+
+This document, `AGENTS.md`, contains the structured data and specifications for the **FDA Submission Dashboard**. When building or updating the `fda-submission-dashboard-complete.html` file, use the content below as the single source of truth.
+
+- **Structure**: The content is organized into "Tabs" (核心文档清单, 支持文档与FMEA), which should correspond to the tabs in the HTML dashboard.
+- **Content**: Each numbered item represents a document or a process step. The details provided (e.g., 负责部门, 所需输入) should be used to populate the dashboard.
+- **Styling**: The color-coding (<span style="color:blue">FDA提交</span>, <span style="color:green">审计准备</span>) should be replicated in the HTML dashboard's visual design.
+
+---
+
 # FDA提交流程关键文档清单
 
 ## 概述
